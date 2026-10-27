@@ -10,8 +10,8 @@ android {
         applicationId = "com.simon.lenslock"
         minSdk = 33
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.6"
+        versionCode = 8
+        versionName = "1.6.1"
     }
 
     buildTypes {

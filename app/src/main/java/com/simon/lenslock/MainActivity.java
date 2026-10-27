@@ -4,10 +4,12 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Insets;
@@ -16,8 +18,10 @@ import android.graphics.SurfaceTexture;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -344,7 +348,39 @@ public class MainActivity extends Activity implements CameraEngine.Listener {
         updateZoomSlider();
         updateFocusPill();
         updateBrightnessLabel();
+        restoreLastPhoto();
+    }
+
+    /**
+     * The round thumbnail has to survive a restart, so when nothing was shot in
+     * this session the newest image in DCIM/Camera is looked up in the media
+     * store. Only rows LensLock inserted come back without a photo permission,
+     * which keeps the app on the camera permission alone.
+     */
+    private void restoreLastPhoto() {
+        if (lastPhoto == null) lastPhoto = newestCameraPhoto();
         if (lastPhoto != null) loadThumb(lastPhoto);
+    }
+
+    private Uri newestCameraPhoto() {
+        // MediaStore stores the relative path with a trailing slash, the value
+        // handed to insert may not carry it, so both shapes are matched.
+        String folder = Environment.DIRECTORY_DCIM + "/Camera";
+        String selection = MediaStore.Images.Media.RELATIVE_PATH + " IN (?, ?)";
+        String[] args = {folder, folder + "/"};
+        String order = MediaStore.Images.Media.DATE_ADDED + " DESC, "
+                + MediaStore.Images.Media._ID + " DESC";
+        String[] projection = {MediaStore.Images.Media._ID};
+        try (Cursor c = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                projection, selection, args, order)) {
+            if (c != null && c.moveToFirst()) {
+                return ContentUris.withAppendedId(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, c.getLong(0));
+            }
+        } catch (Exception e) {
+            Log.w("LensLock", "could not look up the last photo", e);
+        }
+        return null;
     }
 
     private LinearLayout buildPanel() {
