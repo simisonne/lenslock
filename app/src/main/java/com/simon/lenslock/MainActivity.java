@@ -25,6 +25,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
@@ -883,6 +884,37 @@ public class MainActivity extends Activity implements CameraEngine.Listener {
             startActivity(intent);
         } catch (ActivityNotFoundException ignored) {
         }
+    }
+
+    // -------------------------------------------------------- hardware shutter
+
+    /**
+     * Volume up is the hardware shutter, the way the stock camera does it. Both
+     * directions of the key are consumed so a press does not also change the
+     * media volume or play the volume tone, and a held key fires once.
+     */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() != KeyEvent.KEYCODE_VOLUME_UP) {
+            return super.dispatchKeyEvent(event);
+        }
+        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            shutterKeyCapture();
+        }
+        return true;
+    }
+
+    /**
+     * The key press leaves no finger on the shutter, so the button animates to
+     * show the shot went off. The release runs on the view's own handler, because
+     * the status pill clears every callback on {@code ui} and would strand the
+     * button in the pressed state.
+     */
+    private void shutterKeyCapture() {
+        if (engine == null) return;
+        shutter.setPressed(true);
+        shutter.postDelayed(() -> shutter.setPressed(false), 120);
+        engine.capture();
     }
 
     // --------------------------------------------------------------- lifecycle

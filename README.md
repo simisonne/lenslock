@@ -48,6 +48,7 @@ for the whole session, so every frame comes from the lens you chose.
 | **Focus point** | Tap the preview and an amber square marks the spot, with the metering region sent to the sensor. |
 | **Files** | Full resolution JPEG into `DCIM/Camera`, the folder GrapheneOS Camera uses, with `IMG_` names. The picture is rotated to match how the phone was held, so viewers need no EXIF hints. |
 | **Last shot** | The round thumbnail bottom left shows the newest photo in `DCIM/Camera` and opens it on tap, so it is still there after a restart. |
+| **Shutter key** | Volume up takes the photo, so the phone can stay at arm's length for macro work instead of reaching for the round button. Volume down keeps working as the volume key. |
 | **Held any way** | The interface follows the device orientation, and the file rotation follows the pose you shot in. |
 
 <p align="center">
@@ -56,12 +57,12 @@ for the whole session, so every frame comes from the lens you chose.
 
 ## Install
 
-Download `lenslock-1.6.1.apk` from [Releases](https://github.com/simisonne/lenslock/releases/latest)
+Download `lenslock-1.7.0.apk` from [Releases](https://github.com/simisonne/lenslock/releases/latest)
 and open it on a phone running Android 13 or newer, or push it over `adb`.
 
 | Step | Command |
 | --- | --- |
-| Install the release | `adb install -r lenslock-1.6.1.apk` |
+| Install the release | `adb install -r lenslock-1.7.0.apk` |
 | Get the code | `git clone https://github.com/simisonne/lenslock.git` |
 | Point Gradle at your SDK | `echo "sdk.dir=/path/to/Android/sdk" > local.properties` |
 | Build the APK | `./gradlew assembleDebug` |
@@ -84,7 +85,8 @@ download, the app is plain Java on Camera2 with hand drawn views.
    down until the detail snaps in. The distance is shown in cm as you move it.
 4. Tap the preview to move the focus point when auto is hunting, and use Brightness when the
    subject sits against a bright background.
-5. Press the shutter. The photo lands in `DCIM/Camera` with the rest of your camera roll.
+5. Press the shutter, or the volume up key, which fires the same capture. The photo lands in
+   `DCIM/Camera` with the rest of your camera roll.
 
 ## Under the hood
 
@@ -105,6 +107,8 @@ download, the app is plain Java on Camera2 with hand drawn views.
   offset on top, because the matrix runs in view space and reads the opposite way round.
 - `JpegSaver` centre crops for zoom, rotates, and writes through `MediaStore`. `ZoomSlider` draws
   the markers and interpolates the indicator from the live zoom.
+- `MainActivity.dispatchKeyEvent` turns volume up into the shutter and consumes both directions of
+  the key, so the press does not also move the media volume or play the volume tone.
 - `probe-ref/` holds the throwaway probe app that produced these findings, including the session
   that was caught changing sensor on its own.
 
